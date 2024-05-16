@@ -8,8 +8,18 @@ install_swarm_agent() {
 }
 
 install_media_server() {
-  platform=$(uname -m)
-  
+   platform=$(uname -m)
+
+  # make sure libcamera is at the right place
+  if [ ! -f "/lib/${platform}-linux-gnu/libcamera.so.0.0" ] && compgen -G "/lib/${platform}-linux-gnu/libcamera.so.*" > /dev/null; then
+    mapfile -t files < <(compgen -G "/lib/${platform}-linux-gnu/libcamera.so.*")
+    ln -s "${files[-1]}" "/lib/${platform}-linux-gnu/libcamera.so.0.0"
+  fi
+  if [ ! -f "/lib/${platform}-linux-gnu/libcamera-base.so.0.0" ] && compgen -G "/lib/${platform}-linux-gnu/libcamera-base.so.*" > /dev/null; then
+    mapfile -t files < <(compgen -G "/lib/${platform}-linux-gnu/libcamera-base.so.*")
+    ln -s "${files[-1]}" "/lib/${platform}-linux-gnu/libcamera-base.so.0.0"
+  fi
+
   if [ "$platform" == "aarch64"  ]; then
     platformName="arm64"
   elif [ "$platform" == "x86_64" ]; then
@@ -19,6 +29,9 @@ install_media_server() {
     exit 42
   fi
 
+  curl --user "$USERNAME:$TOKEN" "https://gitlab.ti.bfh.ch/api/v4/projects/38296/packages/generic/mediamtx/1.8.1/linux_${platformName}.tar.gz?select=package_file" | tar -xzf
+
+  # remove previous
   systemctl stop mediamtx.service
   systemctl disable mediamtx.service
   rm -f /etc/systemd/system/mediamtx.service
@@ -27,17 +40,7 @@ install_media_server() {
   rm -f /usr/local/etc/server.key
   rm -f /usr/local/etc/server.crt
 
-  if [ ! -f "/lib/${platform}-linux-gnu/libcamera.so.0.0" ] && compgen -G "/lib/${platform}-linux-gnu/libcamera.so.*" > /dev/null; then
-      file=$(compgen -G "/lib/${platform}-linux-gnu/libcamera.so.*")
-      ln -s "$file" "/lib/${platform}-linux-gnu/libcamera.so.0.0"
-  fi
-  if [ ! -f "/lib/${platform}-linux-gnu/libcamera-base.so.0.0" ] && compgen -G "/lib/${platform}-linux-gnu/libcamera-base.so.*" > /dev/null; then
-        file=$(compgen -G "/lib/${platform}-linux-gnu/libcamera-base.so.*")
-        ln -s "$file" "/lib/${platform}-linux-gnu/libcamera.so.0.0"
-  fi
-
-  curl --user "$USERNAME:$TOKEN" "https://gitlab.ti.bfh.ch/api/v4/projects/38296/packages/generic/mediamtx/1.8.1/linux_${platformName}.tar.gz?select=package_file" | tar -xzf
-
+  # add new
   mv mediamtx /usr/local/bin/
   mv mediamtx.yml /usr/local/etc/
   mv server.key /usr/local/etc/
