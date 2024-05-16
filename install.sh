@@ -29,11 +29,12 @@ install_media_server() {
     exit 42
   fi
 
-  curl --user "$USERNAME:$TOKEN" "https://gitlab.ti.bfh.ch/api/v4/projects/38296/packages/generic/mediamtx/1.8.1/linux_${platformName}.tar.gz?select=package_file" | tar -xzf
+  curl --user "$USERNAME:$TOKEN" "https://gitlab.ti.bfh.ch/api/v4/projects/38296/packages/generic/mediamtx/1.8.1/linux_${platformName}.tar.gz?select=package_file" -o mediamtx.tar.gz
+  tar -xzf mediamtx.tar.gz
 
   # remove previous
-  systemctl stop mediamtx.service
-  systemctl disable mediamtx.service
+  systemctl stop mediamtx.service 2>/dev/null || true
+  systemctl disable mediamtx.service 2>/dev/null || true
   rm -f /etc/systemd/system/mediamtx.service
   rm -f /usr/local/bin/mediamtx
   rm -f /usr/local/etc/mediamtx.yml
@@ -58,6 +59,8 @@ EOF
   systemctl daemon-reload
   systemctl enable mediamtx
   systemctl start mediamtx
+
+  rm mediamtx.tar.gz
 }
 
 print_logo() {
