@@ -5,7 +5,7 @@ export LC_ALL=C
 install_swarm_gateway() {
   curl -fsSL https://swarmguard.io/install-gateway.sh | sh
 
-  swarm -p up
+  swarm -q up
 }
 
 install_dvsi_gateway() {
