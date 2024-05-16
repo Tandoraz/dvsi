@@ -19,6 +19,14 @@ install_media_server() {
     exit 42
   fi
 
+  systemctl stop mediamtx.service
+  systemctl disable mediamtx.service
+  rm -f /etc/systemd/system/mediamtx.service
+  rm -f /usr/local/bin/mediamtx
+  rm -f /usr/local/etc/mediamtx.yml
+  rm -f /usr/local/etc/server.key
+  rm -f /usr/local/etc/server.crt
+
   if [ ! -f "/lib/${platform}-linux-gnu/libcamera.so.0.0" ] && compgen -G "/lib/${platform}-linux-gnu/libcamera.so.*" > /dev/null; then
       file=$(compgen -G "/lib/${platform}-linux-gnu/libcamera.so.*")
       ln -s "$file" "/lib/${platform}-linux-gnu/libcamera.so.0.0"
@@ -30,14 +38,23 @@ install_media_server() {
 
   curl --user "$USERNAME:$TOKEN" "https://gitlab.ti.bfh.ch/api/v4/projects/38296/packages/generic/mediamtx/1.8.1/linux_${platformName}.tar.gz?select=package_file" | tar -xzf
 
-  sudo mv mediamtx /usr/local/bin/
-  sudo mv mediamtx.yml /usr/local/etc/
-  sudo mv server.key /usr/local/etc/
-  sudo mv server.crt /usr/local/etc/
+  mv mediamtx /usr/local/bin/
+  mv mediamtx.yml /usr/local/etc/
+  mv server.key /usr/local/etc/
+  mv server.crt /usr/local/etc/
 
-  sudo systemctl daemon-reload
-  sudo systemctl enable mediamtx
-  sudo systemctl start mediamtx
+  tee /etc/systemd/system/mediamtx.service >/dev/null << EOF
+  [Unit]
+  Wants=network.target
+  [Service]
+  ExecStart=/usr/local/bin/mediamtx /usr/local/etc/mediamtx.yml
+  [Install]
+  WantedBy=multi-user.target
+EOF
+
+  systemctl daemon-reload
+  systemctl enable mediamtx
+  systemctl start mediamtx
 }
 
 print_logo() {
