@@ -4,13 +4,11 @@ export LC_ALL=C
 
 install_swarm_gateway() {
   curl -fsSL https://swarmguard.io/install-gateway.sh | sh
-
-  swarm -q up
+  swarm up
 }
 
 install_dvsi_gateway() {
   apiKey=$(docker exec swarmguard-l4gw bash -c 'echo "$API__SVCKEY"')
-  echo "using apiKey: $apiKey"
 
   docker run --name dvsi-gateway -d --network host --restart=always -v /etc/hosts:/etc/hosts -e SWARMKEEPER_API_KEY="$apiKey" registry.gitlab.ti.bfh.ch/burgt2/dvsi/gateway:latest
 }
