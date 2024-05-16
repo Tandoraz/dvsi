@@ -1,4 +1,4 @@
-# dvsi
+# DVSI
 
 For installing you will need `username` and an `access token`. \
 You can get these from the author.
