@@ -10,6 +10,7 @@ install_swarm_gateway() {
 install_dvsi_gateway() {
   apiKey=$(docker exec swarmguard-l4gw bash -c 'echo "$API__SVCKEY"')
 
+  docker pull registry.gitlab.ti.bfh.ch/burgt2/dvsi/gateway:latest
   docker run --name dvsi-gateway -d --network host --restart=always -v /etc/hosts:/etc/hosts -e SWARMKEEPER_API_KEY="$apiKey" registry.gitlab.ti.bfh.ch/burgt2/dvsi/gateway:latest
 }
 
@@ -71,4 +72,4 @@ print "- ✓ installing dvsi-gateway" 1
 print ""
 show_setup_qr_code
 
-echo "  finished installing"
+echo "finished installing"
