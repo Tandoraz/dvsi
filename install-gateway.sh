@@ -3,7 +3,7 @@ set -e -o pipefail
 export LC_ALL=C
 
 install_swarm_gateway() {
-  curl -fsSL https://swarmguard.io/install-gateway.sh | sh
+  curl -fsSL https://swarmguard.io/install-gateway.sh | sh >/dev/null
   swarm up
 }
 
