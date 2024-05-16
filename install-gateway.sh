@@ -56,9 +56,8 @@ fi
 
 print ""
 read -p "  Enter username: " -r USERNAME
-read -p "  Enter access token: " -r TOKEN
 
-docker login -u "$USERNAME" -p "$TOKEN" registry.gitlab.ti.bfh.ch
+docker login -u "$USERNAME" registry.gitlab.ti.bfh.ch
 
 clear
 
