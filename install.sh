@@ -98,7 +98,7 @@ fi
 
 print ""
 read -p "  Enter username: " -r USERNAME
-read -p "  Enter access token: " -r TOKEN
+read -p "  Enter access token: " -r -s TOKEN
 
 print "start installing"
 echo ""
