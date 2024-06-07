@@ -2,21 +2,53 @@
 set -e -o pipefail
 export LC_ALL=C
 
-install_swarm_gateway() {
-  curl -fsSL https://swarmguard.io/install-gateway.sh | sh >/dev/null
+install_swarm_agent() {
+  curl -fsSL https://swarmguard.io/install.sh | sh > /dev/null
   swarm up
 }
 
 install_dvsi_gateway() {
-  apiKey=$(docker exec swarmguard-l4gw bash -c 'echo "$API__SVCKEY"')
-
+  create_cert
   docker pull registry.gitlab.ti.bfh.ch/burgt2/dvsi/gateway:latest
-  docker run --name dvsi-gateway -d --network host --restart=always -v /etc/hosts:/etc/hosts -e SWARMKEEPER_API_KEY="$apiKey" registry.gitlab.ti.bfh.ch/burgt2/dvsi/gateway:latest
+  docker run --name dvsi-gateway -d --network host --restart=always -v /etc/hosts:/etc/hosts -v ~/.cert:/app/cert -e DVSI_AUTH_REALM="$USERNAME" registry.gitlab.ti.bfh.ch/burgt2/dvsi/gateway:latest
+}
+
+create_cert() {
+  working_dir=$(pwd)
+  ip=$(curl ipinfo.io/ip)
+  mkdir ~/.cert -p
+  cd ~/.cert
+  touch ssl.cnf
+  echo "[req]
+default_bits  = 2048
+default_md = sha256
+distinguished_name = req_distinguished_name
+req_extensions = req_ext
+x509_extensions = v3_req
+prompt = no
+
+[req_distinguished_name]
+countryName = CH
+stateOrProvinceName = Bern
+localityName = Bern
+organizationName = dvsi
+commonName = dvsi Self-signed certificate
+
+[req_ext]
+subjectAltName = @alt_names
+[v3_req]
+subjectAltName = @alt_names
+[alt_names]
+IP.1 = $ip" > ~/.cert/ssl.cnf
+
+  openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout privkey.pem -out cert.pem -config ssl.cnf
+  fingerprint=$(openssl x509 -in cert.pem -noout -fingerprint -sha256 | cut -d "=" -f2 | tr -d ':')
+  cd "$working_dir"
 }
 
 show_setup_qr_code() {
-  ip=$(curl ipinfo.io/ip)
-  printf "{\"gateway\":\"%s\"}" "$ip" | curl -F-=\<- qrenco.de
+  printf "{\"gateway\":\"%s\",\"realm\":\"%s\",\"fingerprint\":\"%s\"}" "$ip" "$USERNAME" "$fingerprint" | curl -F-=\<- qrenco.de > .dvsi_config
+  cat .dvsi_config
 }
 
 print_logo() {
@@ -54,15 +86,16 @@ fi
 
 print ""
 read -p "  Enter username: " -r USERNAME
+read -p "  Enter access token: " -r -s TOKEN
 
-docker login -u "$USERNAME" registry.gitlab.ti.bfh.ch
+docker login -u "$USERNAME" -p "$TOKEN" registry.gitlab.ti.bfh.ch
 
 clear
 
 print "start installing"
 
 print "- ⟳ installing swarm-agent"
-install_swarm_gateway
+install_swarm_agent
 print "- ✓ installing swarm-agent" 1
 
 print "- ⟳ installing dvsi-gateway"

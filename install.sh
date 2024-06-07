@@ -20,7 +20,7 @@ install_media_server() {
     ln -s "${files[-1]}" "/lib/${platform}-linux-gnu/libcamera-base.so.0.0"
   fi
 
-  if [ "$platform" == "aarch64"  ]; then
+  if [ "$platform" == "aarch64" ]; then
     platformName="arm64"
   elif [ "$platform" == "x86_64" ]; then
     platformName="amd64"
@@ -38,14 +38,10 @@ install_media_server() {
   rm -f /etc/systemd/system/mediamtx.service
   rm -f /usr/local/bin/mediamtx
   rm -f /usr/local/etc/mediamtx.yml
-  rm -f /usr/local/etc/server.key
-  rm -f /usr/local/etc/server.crt
 
   # add new
   mv mediamtx /usr/local/bin/
   mv mediamtx.yml /usr/local/etc/
-  mv server.key /usr/local/etc/
-  mv server.crt /usr/local/etc/
 
   tee /etc/systemd/system/mediamtx.service >/dev/null << EOF
   [Unit]
